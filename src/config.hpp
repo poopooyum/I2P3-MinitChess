@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 /*Board Size, Don't change!*/
 #define BOARD_H 6
 #define BOARD_W 5

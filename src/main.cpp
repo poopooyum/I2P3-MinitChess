@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <array>
+#include <map>
 #include <vector>
 #include <cassert>
 #include <cstdint>
@@ -12,31 +13,52 @@
 /*Board Size, Don't change!*/
 #define BOARD_H 6
 #define BOARD_W 5
+enum PIECE
+{
+  EMPTY,
+  PAWN,
+  ROOK,
+  KNIGHT,
+  BISHOP,
+  QUEEN,
+  KING
+};
+
+std::map<char, int> PIECEVALUES = {{EMPTY, 0},
+                                   {PAWN, 2},
+                                   {ROOK, 15},
+                                   {KNIGHT, 8},
+                                   {BISHOP, 15},
+                                   {QUEEN, 40},
+                                   {KING, 200}};
 
 /*State*/
-typedef std::pair<size_t, size_t> Point;
+typedef std::pair<size_t, size_t>
+    Point;
 typedef std::pair<Point, Point> Move;
+// the above is equivalent to "using Point = pair<size_t, size_t>"
 class Board
 {
 public:
-  char board[2][BOARD_H][BOARD_W] = {{
-                                         // white
-                                         {0, 0, 0, 0, 0},
-                                         {0, 0, 0, 0, 0},
-                                         {0, 0, 0, 0, 0},
-                                         {0, 0, 0, 0, 0},
-                                         {1, 1, 1, 1, 1},
-                                         {2, 3, 4, 5, 6},
-                                     },
-                                     {
-                                         // black
-                                         {6, 5, 4, 3, 2},
-                                         {1, 1, 1, 1, 1},
-                                         {0, 0, 0, 0, 0},
-                                         {0, 0, 0, 0, 0},
-                                         {0, 0, 0, 0, 0},
-                                         {0, 0, 0, 0, 0},
-                                     }};
+  char board[2][BOARD_H][BOARD_W] =
+      {{
+           // white
+           {0, 0, 0, 0, 0},
+           {0, 0, 0, 0, 0},
+           {0, 0, 0, 0, 0},
+           {0, 0, 0, 0, 0},
+           {1, 1, 1, 1, 1},
+           {2, 3, 4, 5, 6},
+       },
+       {
+           // black
+           {6, 5, 4, 3, 2},
+           {1, 1, 1, 1, 1},
+           {0, 0, 0, 0, 0},
+           {0, 0, 0, 0, 0},
+           {0, 0, 0, 0, 0},
+           {0, 0, 0, 0, 0},
+       }};
 };
 
 enum GameState
@@ -55,17 +77,48 @@ public:
   Board board;
   int player = 0;
   std::vector<Move> legal_actions;
+  int boardVal;
 
+  // A set of overloaded constructors
   State(){};
   State(int player) : player(player){};
   State(Board board) : board(board){};
   State(Board board, int player) : board(board), player(player){};
 
+  void evaluate(); // calculates "boardVal"
   State *next_state(Move move);
   void get_legal_actions();
   std::string encode_output();
   std::string encode_state();
 };
+
+/**
+ * @brief evaluate the state
+ *
+ * @return int
+ */
+void State::evaluate()
+{
+  // [TODO] design your own evaluation function
+  int self_val = 0;
+  int oppo_val = 0;
+  auto self_board = this->board.board[this->player];
+  auto oppo_board = this->board.board[1 - this->player];
+  for (int i = 0; i < BOARD_H; i++)
+  {
+    for (int j = 0; j < BOARD_W; j++)
+    {
+      self_val += PIECEVALUES[self_board[i][j]];
+      oppo_val += PIECEVALUES[oppo_board[i][j]];
+      if (PIECEVALUES[self_board[i][j]] == 2 && i == 1 + this->player * 3)
+        self_val += 13;
+      if (PIECEVALUES[oppo_board[i][j]] == 2 && i == 1 + this->player * 3)
+        oppo_val += 13;
+    }
+  }
+  this->boardVal = self_val - oppo_val;
+  return;
+}
 
 /**
  * @brief return next state after the move
@@ -79,13 +132,17 @@ State *State::next_state(Move move)
   Point from = move.first, to = move.second;
 
   int8_t moved = next.board[this->player][from.first][from.second];
-  // promotion for pawn
+  // the variable "moved" stores the id of the moved piece.
+  // Ex. if moved = 1, we know that it was a pawn that had just been moved.
+
+  // promotion for pawn (either white reaches x = 0 or black reaches x = 5)
   if (moved == 1 && (to.first == BOARD_H - 1 || to.first == 0))
   {
-    moved = 5;
+    moved = 5; // now, the pawn is a queen.
   }
-  if (next.board[1 - this->player][to.first][to.second])
-  {
+  // An opponent's piece being captured
+  if (next.board[1 - this->player][to.first][to.second]) // there is an opponent's piece at the spot which I'm moving to.
+  {                                                      // meaning that that piece is going to be captured by me.
     next.board[1 - this->player][to.first][to.second] = 0;
   }
 
@@ -93,9 +150,14 @@ State *State::next_state(Move move)
   next.board[this->player][to.first][to.second] = moved;
 
   State *next_state = new State(next, 1 - this->player);
+  // because it's the opponent's turn, hence, next_state->player = opponent.
 
   if (this->game_state != WIN)
+  {
     next_state->get_legal_actions();
+    next_state->evaluate();
+  }
+
   return next_state;
 }
 
@@ -485,14 +547,14 @@ int main(int argc, char **argv)
 
   State game;
   game.get_legal_actions();
+  game.evaluate();
   State *temp;
   std::string data;
   int step = 1;
   int player_id = 0;
   while (game.game_state == UNKNOWN || game.game_state == NONE)
   {
-    // std::cout << "test\n";
-    // Output current state
+    //  Output current state
     std::cout << step << " step" << std::endl;
     log << step << " step" << std::endl;
 
@@ -500,10 +562,12 @@ int main(int argc, char **argv)
     std::cout << data;
     log << data;
 
-    std::cout << "now: Player" << player_id + 1 << "'s turn" << std::endl
+    std::cout << "now: Player" << player_id + 1 << "'s turn" << std::endl;
+    std::cout << "board value for Player" << player_id + 1 << ": " << game.boardVal
               << std::endl
               << std::endl;
-    log << "now: Player" << player_id + 1 << "'s turn" << std::endl
+    log << "now: Player" << player_id + 1 << "'s turn" << std::endl;
+    log << "board value for Player" << player_id + 1 << ": " << game.boardVal
         << std::endl
         << std::endl;
     player_id = player_id ^ 1;
@@ -616,10 +680,12 @@ int main(int argc, char **argv)
   std::cout << data;
   log << data;
 
-  std::cout << "now: Player" << player_id + 1 << "'s turn" << std::endl
+  std::cout << "now: Player" << player_id + 1 << "'s turn" << std::endl;
+  std::cout << "board value for Player" << player_id + 1 << ": " << game.boardVal
             << std::endl
             << std::endl;
-  log << "now: Player" << player_id + 1 << "'s turn" << std::endl
+  log << "now: Player" << player_id + 1 << "'s turn" << std::endl;
+  log << "board value for Player" << player_id + 1 << ": " << game.boardVal
       << std::endl
       << std::endl;
 
@@ -638,5 +704,6 @@ int main(int argc, char **argv)
   // Reset state file
   if (remove(file_state.c_str()) != 0)
     std::cerr << "Error removing file: " << file_state << "\n";
+
   return 0;
 }
