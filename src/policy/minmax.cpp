@@ -6,7 +6,7 @@
 #include "../state/state.hpp"
 #include "./minmax.hpp"
 
-std::ofstream mydebug("debugfile.txt", std::ios::app);
+std::ofstream mydebug("debugger.txt", std::ios::app);
 
 /**
  * @brief Randomly get a legal action
@@ -21,10 +21,10 @@ std::map<std::pair<Move, int>, bool> explored_moves;
 std::pair<Move, int> MinMax::get_move(State *state, int depth, Move prev)
 {
   mydebug << depth << std::endl;
-  explored_moves[{prev, depth}] = 1;
-  std::pair<Move, int> BestMove = {prev, state->boardVal};
+  // explored_moves[{prev, depth}] = true;
+  // std::pair<Move, int> BestMove = {prev, state->boardVal};
   if (depth == 3)
-    return BestMove;
+    return {prev, state->boardVal};
 
   State *root = state;
   if (root->legal_actions.empty())
@@ -33,11 +33,11 @@ std::pair<Move, int> MinMax::get_move(State *state, int depth, Move prev)
   auto actions = root->legal_actions;
   mydebug << "num. of next actions = " << actions.size() << std::endl;
   if (actions.empty())
-    return BestMove;
+    return {prev, state->boardVal};
 
   for (auto A : actions)
   {
-    if (!explored_moves[{A, depth}])
+    // if (!explored_moves[{A, depth}])
     {
       State *newstate = root->next_state(A);
       root->NextStates.push_back(newstate);
@@ -48,14 +48,24 @@ std::pair<Move, int> MinMax::get_move(State *state, int depth, Move prev)
   }
 
   auto it = root->NextStates.begin();
+  std::pair<Move, int> BestMove = get_move(*it, depth + 1, (*it)->prev);
+  it++;
   while (it != root->NextStates.end())
   {
     auto temp = get_move(*it, depth + 1, (*it)->prev);
-    if (temp.second < BestMove.second)
+    if (depth % 2 == 1)
+      temp.second = -temp.second;
+    if (temp.second <= BestMove.second)
       BestMove = temp;
     it++;
   }
-  return BestMove;
+  mydebug << "from (" << BestMove.first.first.first << "," << BestMove.first.first.second << ")"
+          << "to ("
+          << BestMove.first.second.first << "," << BestMove.first.second.second << ")" << std::endl;
+  if (depth == 0)
+    return BestMove;
+  else
+    return {prev, BestMove.second};
 }
 
 /*

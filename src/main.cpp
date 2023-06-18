@@ -24,13 +24,13 @@ enum PIECE
   KING
 };
 
-std::map<char, int> PIECEVALUES = {{EMPTY, 0},
-                                   {PAWN, 2},
-                                   {ROOK, 15},
-                                   {KNIGHT, 8},
-                                   {BISHOP, 15},
-                                   {QUEEN, 40},
-                                   {KING, 200}};
+std::map<int8_t, int> PIECEVALUES = {{EMPTY, 0},
+                                     {PAWN, 2},
+                                     {ROOK, 15},
+                                     {KNIGHT, 8},
+                                     {BISHOP, 15},
+                                     {QUEEN, 40},
+                                     {KING, 200}};
 
 /*State*/
 typedef std::pair<size_t, size_t>
@@ -113,9 +113,9 @@ void State::evaluate()
     {
       self_val += PIECEVALUES[self_board[i][j]];
       oppo_val += PIECEVALUES[oppo_board[i][j]];
-      if (PIECEVALUES[self_board[i][j]] == 2 && i == 1 + this->player * 3)
+      if ((int8_t)self_board[i][j] == 1 && i == 1 + this->player * 3)
         self_val += 13;
-      if (PIECEVALUES[oppo_board[i][j]] == 2 && i == 1 + this->player * 3)
+      if ((int8_t)oppo_board[i][j] == 1 && i == 1 + (1 - this->player) * 3)
         oppo_val += 13;
     }
   }
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     system("cls");
 #else
-    // system("clear");
+    system("clear");
 #endif
     while (true)
     {
