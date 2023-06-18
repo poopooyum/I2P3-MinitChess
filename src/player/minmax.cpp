@@ -48,9 +48,9 @@ void write_valid_spot(std::ofstream &fout)
   while (true)
   {
     // Choose a random spot.
-    auto move = Random2::get_move(root, 0);
-    fout << move.first.first << " " << move.first.second << " "
-         << move.second.first << " " << move.second.second << std::endl;
+    auto move = MinMax::get_move(root, 0, {{0, 0}, {0, 0}});
+    fout << move.first.first.first << " " << move.first.first.second << " "
+         << move.first.second.first << " " << move.first.second.second << std::endl;
 
     // Remember to flush the output to ensure the last action is written to file.
     fout.flush();

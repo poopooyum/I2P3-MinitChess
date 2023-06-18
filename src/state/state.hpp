@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdlib>
 #include <map>
+#include <list>
 #include <vector>
 #include <utility>
 #include "../config.hpp"
@@ -49,7 +50,11 @@ public:
   Board board;
   int player = 0;
   std::vector<Move> legal_actions;
+  std::list<State *> NextStates;
   int boardVal = 0;
+  Move prev = {{0, 0}, {0, 0}};
+  int alpha = -2e9;
+  int beta = 2e9;
 
   State(){};
   State(int player) : player(player){};

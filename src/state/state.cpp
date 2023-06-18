@@ -72,6 +72,7 @@ State *State::next_state(Move move)
   {
     next_state->get_legal_actions();
     next_state->evaluate();
+    next_state->prev = move;
   }
 
   return next_state;

@@ -8,5 +8,13 @@
 class MinMax
 {
 public:
-  static Move get_move(State *state, int depth);
+  static std::pair<Move, int> get_move(State *state, int depth, Move prev);
 };
+
+/*
+class MinMax2
+{
+public:
+  static Move get_move(State *root);
+};
+*/

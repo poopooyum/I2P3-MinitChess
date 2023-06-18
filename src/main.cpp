@@ -78,6 +78,9 @@ public:
   int player = 0;
   std::vector<Move> legal_actions;
   int boardVal;
+  Move prev = {{0, 0}, {0, 0}};
+  int alpha = -2e9;
+  int beta = 2e9;
 
   // A set of overloaded constructors
   State(){};
@@ -156,6 +159,7 @@ State *State::next_state(Move move)
   {
     next_state->get_legal_actions();
     next_state->evaluate();
+    next_state->prev = move;
   }
 
   return next_state;
@@ -585,7 +589,7 @@ int main(int argc, char **argv)
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     system("cls");
 #else
-    system("clear");
+    // system("clear");
 #endif
     while (true)
     {
@@ -621,6 +625,8 @@ int main(int argc, char **argv)
       log << x_axis[action.first.second] << y_axis[action.first.first] << " → "
           << x_axis[action.second.second] << y_axis[action.second.first] << "\n";
       log << data;
+      game.player = !game.player;
+      game.game_state = WIN;
       break;
     }
     else
